@@ -1,0 +1,12 @@
+Package: PoissonUMIs
+Version: 0.0.0
+Date: 2016-04-14
+Title: Poisson Modelling of UMI-tagged scRNASeq
+Author: Tallulah Andrews <tallulandrews@gmail.com>
+Maintainer: Tallulah Andrews <tallulandrews@gmail.com>
+Depends: R (>= 3.2.2)
+Imports: M3Drop
+Suggests: ROCR, knitr, M3DExampleData
+VignetteBuilder: knitr
+Description: A package for modelling single-cell RNASeq data quantified by counting unique molecular identifiers (UMI).
+License: GPL-2
