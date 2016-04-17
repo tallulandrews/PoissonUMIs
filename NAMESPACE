@@ -1,2 +1,4 @@
 exportPattern("PoiUMI_*")
 import(M3Drop)
+import(RColorBrewer)
+import(gplots)

@@ -5,7 +5,7 @@ Title: Poisson Modelling of UMI-tagged scRNASeq
 Author: Tallulah Andrews <tallulandrews@gmail.com>
 Maintainer: Tallulah Andrews <tallulandrews@gmail.com>
 Depends: R (>= 3.2.2)
-Imports: M3Drop
+Imports: M3Drop, RColorBrewer, gplots
 Suggests: ROCR, knitr, M3DExampleData
 VignetteBuilder: knitr
 Description: A package for modelling single-cell RNASeq data quantified by counting unique molecular identifiers (UMI).
