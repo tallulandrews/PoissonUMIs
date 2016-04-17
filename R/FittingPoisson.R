@@ -46,7 +46,7 @@ PoisUMI_Poisson_Account_For_Depth <- function(expr_mat, dimension="genes") {
 	if (dimension == "1" | dimension == "genes" | dimension == "rows") {
 		djs_calculated = vector(length=ng)
 		djs_variance = vector(length=ng)
-		for (j in 1:length(djs)) {
+		for (j in 1:ng) {
 			p = exp(-tis*sj[j]*nc/total)
 			djs_calculated[j] = sum(p)
 			djs_variance[j] = sum(p*(1-p))
@@ -55,7 +55,7 @@ PoisUMI_Poisson_Account_For_Depth <- function(expr_mat, dimension="genes") {
 	} else if (dimension == "2" | dimension == "cells" | dimension == "cols") {
 		gis_calculated = vector(length=nc)
 		gis_variance = vector(length=nc)
-		for (i in 1:length(gis)) {
+		for (i in 1:nc) {
 			p = exp(-tis[i]*(sj*nc/total))
 			gis_calculated[i] = sum(p)
 			gis_variance[i] = sum(p*(1-p))

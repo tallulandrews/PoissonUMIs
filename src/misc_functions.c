@@ -1,4 +1,5 @@
 #include <math.h>
+#include "misc_functions.h"
 #define ITMAX 100 //max iterations
 #define EPS 1.0e-3 //accuracy
 #define FPMIN 1.0e-30 //Number near smallest possilbe floating-point number.
@@ -35,12 +36,9 @@ float dPoisson (int x, float lambda) {
 
 /* Poisson cdf from Numerical Recipes in C */
 float pPoisson (int k, float lambda) {
-	void gcf(float* gammcf, float a, float x, float* gln);
-	void gsr(float* gamser, float a, float x, float* gln);
-	void nrerror(char error_text[]);
 	float gamser, gammcf, gln;
 
-	if (lambda < 0.0 || k < 0) nerror("Invalid arguments in routine gammq");
+	if (lambda < 0.0 || k < 0) nrerror("Invalid arguments in routine gammq");
 	if (k == 0) {
 		return(dPoisson(k, lambda));
 	}
@@ -62,8 +60,6 @@ float pPoisson (int k, float lambda) {
 }
 
 void gser(float* gamser, float a, float x, float* gln) {
-	float gammln(float xx);
-	void nrerror(char error_text[]);
 	int n;
 	float sum,del,ap;
 
@@ -90,8 +86,6 @@ void gser(float* gamser, float a, float x, float* gln) {
 }
 
 void gcf(float* gammcf, float a, float x, float* gln) {
-	float gammln(float xx);
-	void nrerror(char error_text[]);
 	int i;
 	float an,b,c,d,del,h;
 
@@ -104,7 +98,7 @@ void gcf(float* gammcf, float a, float x, float* gln) {
 		an = -i*(i-a);
 		b += 2.0;
 		d=an*d+b;
-		if (fabs(d) < FMIN) d=FPMIN;
+		if (fabs(d) < FPMIN) d=FPMIN;
 		c=b+an/c;
 		if (fabs(c) < FPMIN) c=FPMIN;
 		d=1.0/d;
