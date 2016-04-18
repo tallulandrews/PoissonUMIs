@@ -2,11 +2,12 @@ PoisUMI_plot_fit <- function(output, genes=NA) {
 	if (!is.logical(genes)) {
 		logi = names(output$s) %in% genes;
 		if (sum(logi) < length(genes)) {
-			warn(paste(length(genes)-sum(logi),"/",length(genes)," genes could not be matched to data.", sep=""))
+			warning(paste(length(genes)-sum(logi),"/",length(genes)," genes could not be matched to data.", sep=""))
 		}
 		genes = logi;
 	}
 	# Check input
+	if (sum(c("s","p_obs","p_exp") %in% names(output)) != 3) {stop("First argument does not contain required items: s, p_obs and p_exp!")}
 
 	arrangement = order(output$s)
 	xes = log(output$s)/log(10);
