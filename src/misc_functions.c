@@ -38,7 +38,7 @@ float dPoisson (int x, float lambda) {
 float pPoisson (int k, float lambda) {
 	float gamser, gammcf, gln;
 
-	if (lambda < 0.0 || k < 0) nrerror("Invalid arguments in routine gammq");
+//	if (lambda < 0.0 || k < 0) nrerror("Invalid arguments in routine gammq");
 	if (k == 0) {
 		return(dPoisson(k, lambda));
 	}
@@ -65,7 +65,7 @@ void gser(float* gamser, float a, float x, float* gln) {
 
 	*gln=gammln(a);
 	if (x <= 0.0) {
-		if (x < 0.0) nrerror("x less than 0 in routine gser");
+//		if (x < 0.0) nrerror("x less than 0 in routine gser");
 		*gamser=0.0;
 		return;
 	} else {
