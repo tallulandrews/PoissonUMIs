@@ -6,7 +6,7 @@
 	Date: 15 April 2016
 */
 
-void calc_discrepancy (int* expr_mat, int* nc, int* ng, double* discrepancy) {
+void calc_difference (int* expr_mat, int* nc, int* ng, double* difference) {
 	long tis[*nc]; 
 	long sj[*ng];
 	long total;
@@ -25,11 +25,7 @@ void calc_discrepancy (int* expr_mat, int* nc, int* ng, double* discrepancy) {
 			double lambda = tis[i]*sj[j]/((double)total);
 			int coord = convert_2D_indices_to_1D(j, i, ng, nc);
 			int val = expr_mat[coord];
-			if (val > lambda) {
-				discrepancy[coord] = pPoisson(val-1,lambda);
-			} else {
-				discrepancy[coord] = -1*(1-pPoisson(val,lambda));
-			}
+			difference[coord] = (double)val - lambda;
 		}
 	}	
 }
