@@ -64,7 +64,7 @@ PoisUMI_Poisson_Account_For_Depth <- function(expr_mat, dimension="genes", scale
 
 PoisUMI_Poisson_Account_For_Depth_DE <- function(expr_mat) {
 	sj = rowSums(expr_mat)/length(expr_mat[1,]) # Mean expression each gene
-	djs = rowSums(diradj == 0) # Observed Dropouts per cell
+	djs = rowSums(expr_mat == 0) # Observed Dropouts per cell
 	nc = length(expr_mat[1,])
 	drop_rate_obs = djs/nc
 	drop_rate_obs_err = sqrt(drop_rate_obs*(1-drop_rate_obs)/nc)
@@ -122,7 +122,7 @@ PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
 }
 
 PoisUMI_Full_Poisson_DE <- function(expr_mat) {
-	djs = rowSums(diradj == 0) # Observed Dropouts per cell
+	djs = rowSums(expr_mat == 0) # Observed Dropouts per cell
 	nc = length(expr_mat[1,]) # Number of cells
 	drop_rate_obs = djs/nc
 	drop_rate_obs_err = sqrt(drop_rate_obs*(1-drop_rate_obs)/nc)
