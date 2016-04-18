@@ -1,6 +1,3 @@
 useDynLib(PoissonUMIs)
 exportPattern("PoisUMI_*")
-import(M3Drop)
-import(RColorBrewer)
-import(gplots)
 import(bbmle)
