@@ -15,18 +15,26 @@ hidden_calc_s_and_p <- function(expr_mat) {
 	return(list(s = s,p = p));
 }
 
-PoisUMI_Fit_Basic_Poisson <- function(expr_mat) {
+PoisUMI_Fit_Basic_Poisson <- function(expr_mat, sigma_init=NA) {
 	vals = hidden_calc_s_and_p(expr_mat)
+	nc = length(expr_mat[1,]) # Number of cells
+        ng = length(expr_mat[,1]) # Number of genes
+
 
 	p = vals$p
 	s = vals$s
+	if (is.na(sigma_init)) {sigma_init = mean(p*(1-p))}
 	LL <- function(alpha, sigma) {
+		if (alpha <= 0) { return(nc*ng*1000000000)} #alpha should always be positive
 		p_zero = 1 - (1-exp(-alpha*s))
+		if (sum(is.na(p_zero) | p_zero < 0 | p_zero > 1) > 0) {
+			stop("p is unacceptable value (1)")
+		}
 		R = p - p_zero;
 	        R = suppressWarnings(dnorm(R, 0, sigma, log = TRUE))
 	        -sum(R)
 	    }
-	fit = mle2(LL, start = list(alpha=1, sigma=0.1))
+	fit = mle2(LL, start = list(alpha=1, sigma=sigma_init))
 	return(list(s=s,p_obs=p,p_exp=exp(-fit@coef[1]*s), alpha=fit@coef[1]))
 }
 
@@ -94,11 +102,16 @@ PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
 	djs = rowSums(expr_mat==0)
 
 	LL <- function(alpha) {
+		if (alpha <= 0) { return(nc*ng*1000000000)} #alpha should always be positive
 		R = 0
 		for (j in 1:ng) {
 			p = exp(-tis*sj[j]*nc*alpha/total)
+			if (sum(is.na(p) | p < 0 | p > 1) > 0) {
+				stop("p is unacceptable value (1)")
+			}
 			res = djs[j] - sum(p);
-			sigma = sqrt(sum(0.5*(1-0.5))); # Prevent sigma being too small & causing errors.
+			sigma = sqrt(sum(p*(1-p))); 
+			sigma = max(sigma, nc*djs[j]/nc*(1-djs[j]/nc))
 			if (is.na(dnorm(res, 0, sigma, log=TRUE))) {print(j);}
 			R = R + dnorm(res, 0, sigma, log=TRUE);
 		}
@@ -107,14 +120,28 @@ PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
 		R2 = 0
 		for (i in 1:nc) {
 			p = exp(-tis[i]*(sj*nc*alpha/total))
+			if (sum(is.na(p) | p < 0 | p > 1) > 0) {
+				stop("p is unacceptable value (2)")
+			}
 			res = gis[i]-sum(p)
 			sigma = sqrt(sum(p*(1-p)));
+			sigma = max(sigma, ng*gis[i]/ng*(1-gis[i]/ng))
 			R2 = R2+dnorm(res,0, sigma, log=TRUE)
 		}
 		R2 = R2/nc
 	        -(R+R2)
 	    }
+	# Fit poisson without accounting for cell-specific depth to find approx scaling
 	fit_basic = PoisUMI_Fit_Basic_Poisson(expr_mat)
+	# Add robustness against failure to fit
+	res = fit_basic$p_obs - fit_basic$p_exp;
+	if (sum(res < 0)/length(res) > 0.8 | sum(res > 0)/length(res) > 0.8) {
+		fit_basic = PoisUMI_Fit_Basic_Poisson(expr_mat, sigma_init=0.01)	}
+	res = fit_basic$p_obs - fit_basic$p_exp;
+	if (sum(res < 0)/length(res) > 0.8 | sum(res > 0)/length(res) > 0.8) {
+		fit_basic = PoisUMI_Fit_Basic_Poisson(expr_mat, sigma_init=0.5)		}
+
+	# Fit the full model starting at fit above b/c this fitting is slow
 	fit = mle2(LL, start = list(alpha=fit_basic$alpha))
 	scale_factor = fit@coef[1]
 	predictions = PoisUMI_Poisson_Account_For_Depth(expr_mat, dimension="genes", scale_factor=scale_factor)
