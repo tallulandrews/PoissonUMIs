@@ -26,12 +26,13 @@ PoisUMI_Fit_Basic_Poisson <- function(expr_mat, sigma_init=NA) {
 	if (is.na(sigma_init)) {sigma_init = mean(p*(1-p))}
 	LL <- function(alpha, sigma) {
 		if (alpha <= 0) { return(nc*ng*1000000000)} #alpha should always be positive
+		if (sigma <= 0) { return(nc*ng*1000000000)} #sigma should always be positive
 		p_zero = 1 - (1-exp(-alpha*s))
 		if (sum(is.na(p_zero) | p_zero < 0 | p_zero > 1) > 0) {
 			stop("p is unacceptable value (1)")
 		}
 		R = p - p_zero;
-	        R = suppressWarnings(dnorm(R, 0, sigma, log = TRUE))
+	        R = dnorm(R, 0, sigma, log = TRUE)
 	        -sum(R)
 	    }
 	fit = mle2(LL, start = list(alpha=1, sigma=sigma_init))
@@ -103,7 +104,8 @@ PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
 
 	LL <- function(alpha) {
 		if (alpha <= 0) { return(nc*ng*1000000000)} #alpha should always be positive
-		R = 0
+		R = 0;
+		denom = ng;
 		for (j in 1:ng) {
 			p = exp(-tis*sj[j]*nc*alpha/total)
 			if (sum(is.na(p) | p < 0 | p > 1) > 0) {
@@ -111,13 +113,18 @@ PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
 			}
 			res = djs[j] - sum(p);
 			sigma = sqrt(sum(p*(1-p))); 
-			sigma = max(sigma, nc*djs[j]/nc*(1-djs[j]/nc))
+			sigma_obs =  sqrt(nc*djs[j]/nc*(1-djs[j]/nc))
+			sigma = max(sigma, sigma_obs)
+			if (sigma == 0 & res == 0){R = R+1; next;} 
+			if (sigma == 0 & res > 0){denom = denom-1; next;} 
 			if (is.na(dnorm(res, 0, sigma, log=TRUE))) {print(j);}
+			if (!is.finite(dnorm(res, 0, sigma, log=TRUE))) {print(j);}
 			R = R + dnorm(res, 0, sigma, log=TRUE);
 		}
-		R = R/ng
+		R = R/denom
 
 		R2 = 0
+		denom2 = nc
 		for (i in 1:nc) {
 			p = exp(-tis[i]*(sj*nc*alpha/total))
 			if (sum(is.na(p) | p < 0 | p > 1) > 0) {
@@ -125,10 +132,13 @@ PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
 			}
 			res = gis[i]-sum(p)
 			sigma = sqrt(sum(p*(1-p)));
-			sigma = max(sigma, ng*gis[i]/ng*(1-gis[i]/ng))
+			sigma_obs = sqrt(ng*gis[i]/ng*(1-gis[i]/ng))
+			sigma = max(sigma, sigma_obs)
+			if (sigma == 0 & res == 0){R2=R2+1; next;} 
+			if (sigma == 0 & res > 0){denom2 = denom2-1; next;} 
 			R2 = R2+dnorm(res,0, sigma, log=TRUE)
 		}
-		R2 = R2/nc
+		R2 = R2/denom2
 	        -(R+R2)
 	    }
 	# Fit poisson without accounting for cell-specific depth to find approx scaling
@@ -136,10 +146,14 @@ PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
 	# Add robustness against failure to fit
 	res = fit_basic$p_obs - fit_basic$p_exp;
 	if (sum(res < 0)/length(res) > 0.8 | sum(res > 0)/length(res) > 0.8) {
-		fit_basic = PoisUMI_Fit_Basic_Poisson(expr_mat, sigma_init=0.01)	}
+		print("First fitting failed attempting again")
+		fit_basic = PoisUMI_Fit_Basic_Poisson(expr_mat, sigma_init=0.01)
+	}
 	res = fit_basic$p_obs - fit_basic$p_exp;
 	if (sum(res < 0)/length(res) > 0.8 | sum(res > 0)/length(res) > 0.8) {
-		fit_basic = PoisUMI_Fit_Basic_Poisson(expr_mat, sigma_init=0.5)		}
+		print("First fitting failed attempting again")
+		fit_basic = PoisUMI_Fit_Basic_Poisson(expr_mat, sigma_init=0.5)
+	}
 
 	# Fit the full model starting at fit above b/c this fitting is slow
 	fit = mle2(LL, start = list(alpha=fit_basic$alpha))
