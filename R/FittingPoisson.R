@@ -151,7 +151,7 @@ PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
 	}
 	res = fit_basic$p_obs - fit_basic$p_exp;
 	if (sum(res < 0)/length(res) > 0.8 | sum(res > 0)/length(res) > 0.8) {
-		print("First fitting failed attempting again")
+		print("Second fitting failed attempting again")
 		fit_basic = PoisUMI_Fit_Basic_Poisson(expr_mat, sigma_init=0.5)
 	}
 
