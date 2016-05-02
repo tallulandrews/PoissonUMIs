@@ -9,10 +9,17 @@ PoisUMI_Down_Sample_Matrix <- function(expr_mat) {
 }
 
 hidden_calc_s_and_p <- function(expr_mat) {
-	if (sum(expr_mat < 0) >0) {stop("Expression matrix contains negative values! M3Drop requires an expression matrix that is not log-transformed.")}
+	if (sum(expr_mat < 0) >0) {stop("Expression matrix contains negative values! PoissonUMIs requires an expression matrix that is not log-transformed.")}
 	p = apply(expr_mat,1,function(x){y = x[!is.na(x)]; sum(y==0)/length(y)});
 	s = rowMeans(expr_mat, na.rm=T);
-	return(list(s = s,p = p));
+
+	tis = colSums(expr_mat, na.rm=T) # Total molecules/cell
+	djs = rowSums(expr_mat == 0, na.rm=T) # Observed Dropouts per gene
+	gis = colSums(expr_mat == 0, na.rm=T) # Observed Dropouts per cell
+	nc = length(expr_mat[1,]) # Number of cells
+	ng = length(expr_mat[,1]) # Number of genes
+	total = sum(tis, na.rm=T) # Total molecules sampled
+	return(list(s = s,p = p, tis=tis, total=total,nc=nc,ng=ng, djs=djs, gis=gis));
 }
 
 PoisUMI_Fit_Basic_Poisson <- function(expr_mat, sigma_init=NA) {
@@ -42,13 +49,14 @@ PoisUMI_Fit_Basic_Poisson <- function(expr_mat, sigma_init=NA) {
 PoisUMI_Poisson_Account_For_Depth <- function(expr_mat, dimension="genes", scale_factor=1) {
 	# Check input
 	dimension = as.character(dimension)
+	vals = hidden_calc_s_and_p(expr_mat)
 
 	# Get values for later
-	tis = colSums(expr_mat) # Total molecules/cell
-	sj = rowSums(expr_mat)/length(expr_mat[1,]) # Mean expression each gene
-	nc = length(expr_mat[1,]) # Number of cells
-	ng = length(expr_mat[,1]) # Number of genes
-	total = sum(tis) # Total molecules sampled
+	tis = vals$tis # Total molecules/cell
+	sj = vals$s # Mean expression each gene
+	nc = vals$nc # Number of cells
+	ng = vals$ng # Number of genes
+	total = vals$total # Total molecules sampled
 
 	if (dimension == "1" | dimension == "genes" | dimension == "rows") {
 		djs_calculated = vector(length=ng)
@@ -67,14 +75,15 @@ PoisUMI_Poisson_Account_For_Depth <- function(expr_mat, dimension="genes", scale
 			gis_calculated[i] = sum(p)
 			gis_variance[i] = sum(p*(1-p))
 		}
-		return(gis_calculated, var=gis_variance);
+		return(list(vals=gis_calculated, var=gis_variance));
 	}
 }
 
 PoisUMI_Poisson_Account_For_Depth_DE <- function(expr_mat) {
-	sj = rowSums(expr_mat)/length(expr_mat[1,]) # Mean expression each gene
-	djs = rowSums(expr_mat == 0) # Observed Dropouts per cell
-	nc = length(expr_mat[1,])
+	vals = hidden_calc_s_and_p(expr_mat)
+	sj = vals$s # Mean expression each gene
+	djs = vals$djs # Observed Dropouts per gene
+	nc = vals$nc
 	drop_rate_obs = djs/nc
 	drop_rate_obs_err = sqrt(drop_rate_obs*(1-drop_rate_obs)/nc)
 
@@ -93,14 +102,15 @@ PoisUMI_Poisson_Account_For_Depth_DE <- function(expr_mat) {
 # Scale & different depth
 
 PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
+	vals = hidden_calc_s_and_p(expr_mat)
 	# Get values for later
-	tis = colSums(expr_mat) # Total molecules/cell
-	sj = rowSums(expr_mat)/length(expr_mat[1,]) # Mean expression each gene
-	nc = length(expr_mat[1,]) # Number of cells
-	ng = length(expr_mat[,1]) # Number of genes
-	total = sum(tis) # Total molecules sampled
-	gis = colSums(expr_mat==0)
-	djs = rowSums(expr_mat==0)
+	tis = vals$tis # Total molecules/cell
+	sj = vals$s # Mean expression each gene
+	nc = vals$nc # Number of cells
+	ng = vals$ng # Number of genes
+	total = vals$total # Total molecules sampled
+	gis = vals$gis # Number dropouts per cell
+	djs = vals$djs # Number dropouts per gene
 
 	LL <- function(alpha) {
 		if (alpha <= 0) { return(nc*ng*1000000000)} #alpha should always be positive
@@ -159,12 +169,16 @@ PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
 	fit = mle2(LL, start = list(alpha=fit_basic$alpha))
 	scale_factor = fit@coef[1]
 	predictions = PoisUMI_Poisson_Account_For_Depth(expr_mat, dimension="genes", scale_factor=scale_factor)
-	return(list(s=sj, p_obs = djs, p_exp=predictions$vals, p_exp_var=predictions$var, alpha=scale_factor, alpha_basic=fit_basic$alpha));
+	
+	lambdas = (sj %*% t(tis))*(nc*scale_factor/total);
+
+	return(list(s=sj, p_obs = djs, p_exp=predictions$vals, p_exp_var=predictions$var, alpha=scale_factor, alpha_basic=fit_basic$alpha), lambdas = lambdas);
 }
 
 PoisUMI_Full_Poisson_DE <- function(expr_mat) {
-	djs = rowSums(expr_mat == 0) # Observed Dropouts per cell
-	nc = length(expr_mat[1,]) # Number of cells
+	vals = hidden_calc_s_and_p(expr_mat)
+	djs = vals$djs # Observed Dropouts per gene
+	nc = vals$nc # Number of cells
 	drop_rate_obs = djs/nc
 	drop_rate_obs_err = sqrt(drop_rate_obs*(1-drop_rate_obs)/nc)
 
@@ -177,4 +191,9 @@ PoisUMI_Full_Poisson_DE <- function(expr_mat) {
 	pvalue = pnorm(Zed, lower.tail = FALSE)
 	Expected$pvalue = pvalue;
 	return(Expected)
+}
+
+PoisUMI_calc_lambdas <- function(expr_mat) {
+	fit = PoisUMI_Fit_Full_Poisson(expr_mat);
+	return(fit$lambdas);
 }
