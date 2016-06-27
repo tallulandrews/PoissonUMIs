@@ -12,9 +12,9 @@ PoisUMI_Calc_Weights <- function(expr_mat, lambdas, alpha) {
 	}
 	Nrow = dim(expr_mat)[1];
 	Ncol = dim(expr_mat)[2];
-	initialized_output = matrix(rep(0, times=Nrow*Ncol), nrow=Nrow, ncol=Ncol);
+	initialized_output <- matrix(rep(0, times=Nrow*Ncol), nrow=Nrow, ncol=Ncol);
 	# Run command
-	out <- .C( "calc_weights", val_mat=as.double(expr_mat*alpha), lambda_mat=as.double(lambdas), weight_mat=as.double(intialized_output), ncol=as.integer(Ncol), nrow=as.integer(Nrow) );
+	out <- .C( "calc_weights", val_mat=as.double(expr_mat*alpha), lambda_mat=as.double(lambdas), weight_mat=as.double(initialized_output), ncol=as.integer(Ncol), nrow=as.integer(Nrow) );
 
 	# Clean up output
 	final_output = matrix(out$weight_mat, nrow=Nrow, ncol=Ncol);
@@ -37,9 +37,35 @@ PoisUMI_Calc_Weighted_Distances  <- function(norm_mat, weight_mat, exponent=2) {
 	}
 	Nrow = dim(norm_mat)[1];
 	Ncol = dim(norm_mat)[2];
-	initialized_output = matrix(rep(0, times=Nrow*Nrow), nrow=Nrow, ncol=Nrow);
+	initialized_output <- matrix(rep(0, times=Nrow*Nrow), nrow=Nrow, ncol=Nrow);
 	# Run command
 	out <- .C( "distance_wgt", y=as.double(norm_mat), w=as.double(weight_mat), nrow=as.integer(Nrow), ncol=as.integer(Ncol), exponent = as.double(exponent), out = as.double(initialized_output) );
+
+	# Clean up output
+	final_output = matrix(out$out, nrow=Nrow, ncol=Nrow);
+	colnames(final_output) = rownames(norm_mat);
+	rownames(final_output) = rownames(norm_mat);
+	return(final_output);
+}
+
+
+PoisUMI_Calc_Weighted_Correlations  <- function(norm_mat, weight_mat) {
+	# Check Input
+	if (!is.matrix(norm_mat)) {
+		norm_mat = as.matrix(norm_mat);
+	}
+	if (!is.matrix(weight_mat)) {
+		weight_mat = as.matrix(weight_mat);
+	}
+
+	if (!identical(dim(norm_mat), dim(weight_mat))) {
+		stop("Error: Expression matrix and lambdas are not of the same dimension");
+	}
+	Nrow = dim(norm_mat)[1];
+	Ncol = dim(norm_mat)[2];
+	initialized_output <- matrix(rep(0, times=Nrow*Nrow), nrow=Nrow, ncol=Nrow);
+	# Run command
+	out <- .C( "cor_matrix_weighted", y=as.double(norm_mat), w=as.double(weight_mat), nrow=as.integer(Nrow), ncol=as.integer(Ncol), out = as.double(initialized_output) );
 
 	# Clean up output
 	final_output = matrix(out$out, nrow=Nrow, ncol=Nrow);

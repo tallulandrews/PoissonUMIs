@@ -172,17 +172,22 @@ PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
 	
 	lambdas = (sj %*% t(tis))*(nc*scale_factor/total);
 
-	return(list(s=sj, p_obs = djs, p_exp=predictions$vals, p_exp_var=predictions$var, alpha=scale_factor, alpha_basic=fit_basic$alpha), lambdas = lambdas);
+	return(list(s=sj, p_obs = djs, p_exp=predictions$vals, p_exp_var=predictions$var, alpha=scale_factor, alpha_basic=fit_basic$alpha, lambdas = lambdas));
 }
 
-PoisUMI_Full_Poisson_DE <- function(expr_mat) {
+PoisUMI_Full_Poisson_DE <- function(expr_mat, fit=NA) {
+	# Need to incorporate error on S
 	vals = hidden_calc_s_and_p(expr_mat)
 	djs = vals$djs # Observed Dropouts per gene
 	nc = vals$nc # Number of cells
 	drop_rate_obs = djs/nc
 	drop_rate_obs_err = sqrt(drop_rate_obs*(1-drop_rate_obs)/nc)
 
-	Expected = PoisUMI_Fit_Full_Poisson(expr_mat)
+	if (!("p_exp" %in% names(fit))) {
+		Expected = PoisUMI_Fit_Full_Poisson(expr_mat)
+	} else {
+		Expected=fit
+	}
 	drop_rate_exp = Expected$p_exp/nc
 	drop_rate_exp_err = sqrt(Expected$p_exp_var/nc^2)
 	difference = drop_rate_obs-drop_rate_exp

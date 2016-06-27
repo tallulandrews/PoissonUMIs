@@ -1,3 +1,4 @@
 useDynLib(PoissonUMIs)
 exportPattern("PoisUMI_*")
 import(bbmle)
+import(skellam)
