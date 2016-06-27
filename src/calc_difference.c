@@ -10,7 +10,7 @@ void pearson_cor_poisson (int* expr_mat, int* nc, int* ng, double* lambdas, doub
 	// All pairs of columns
 	int col1, col2;
 	int row;
-	for (col1 = 0; col1 < (*nc-1);, col1++) {
+	for (col1 = 0; col1 < (*nc-1); col1++) {
 		for(col2 = col1+1; col2 < *nc; col2++) {
 			double var1 = 0.0; 
 			double var2 = 0.0;

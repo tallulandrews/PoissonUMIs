@@ -1,14 +1,14 @@
 int convert_2D_indices_to_1D (int i, int j, int* nrow, int* ncol);
 
-float gammln(float xx);
+double gammln(double xx);
 
-float dPoisson(int x, float lambda);
+double dPoisson(int x, double lambda);
 
-float pPoisson(int k, float lambda);
+double pPoisson(int k, double lambda);
 
-void gser(float* gamser, float a, float x, float* gln);
+void gser(double* gamser, double a, double x, double* gln);
 
-void gcf(float* gammcf, float a, float x, float* gln);
+void gcf(double* gammcf, double a, double x, double* gln);
 
 //void nrerror(char error_text[]);
 

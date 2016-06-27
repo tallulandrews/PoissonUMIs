@@ -2,7 +2,7 @@
 #include "misc_functions.h"
 #define ITMAX 100 //max iterations
 #define EPS 1.0e-3 //accuracy
-#define FPMIN 1.0e-30 //Number near smallest possilbe floating-point number.
+#define FPMIN 1.0e-30 //Number near smallest possilbe doubleing-point number.
 
 int convert_2D_indices_to_1D (int i, int j, int* nrow, int* ncol) {
 	return(j* (*nrow) + i);
@@ -11,7 +11,7 @@ int convert_2D_indices_to_1D (int i, int j, int* nrow, int* ncol) {
 /* Returns ln(gamma(xx)) for xx > 0  with error < 2*10^-10 
 From: Numerical Recipies in C.
 */
-float gammln(float xx) {
+double gammln(double xx) {
 	double x,y,tmp,ser;
 	static double cof[6]={76.18009172947146, -86.50532032941677,
 			      24.01409824083091, -1.231739572450155,
@@ -26,7 +26,7 @@ float gammln(float xx) {
 	return -tmp+log(2.5066282746310005+ser/x);
 }
 
-float dPoisson (int x, float lambda) {
+double dPoisson (int x, double lambda) {
 	if (x == 0) {
 		return(exp(-lambda));
 	}
@@ -35,15 +35,15 @@ float dPoisson (int x, float lambda) {
 }
 
 /* Poisson cdf from Numerical Recipes in C */
-float pPoisson (int k, float lambda) {
-	float gamser, gammcf, gln;
+double pPoisson (int k, double lambda) {
+	double gamser, gammcf, gln;
 
 //	if (lambda < 0.0 || k < 0) nrerror("Invalid arguments in routine gammq");
 	if (k == 0) {
 		return(dPoisson(k, lambda));
 	}
 	if (k < 25) {
-		float sum = 0.0;
+		double sum = 0.0;
 		int i;
 		for (i = 0; i <=k; i++) {
 			sum+=dPoisson(i, lambda);
@@ -51,17 +51,17 @@ float pPoisson (int k, float lambda) {
 		return(sum);
 	}
 	if (lambda < (k + 1.0)) {
-		gser(&gamser, (float) k, lambda, &gln);
+		gser(&gamser, (double) k, lambda, &gln);
 		return 1.0-gamser;
 	} else {
-		gcf(&gammcf, (float) k, lambda, &gln);
+		gcf(&gammcf, (double) k, lambda, &gln);
 		return gammcf;
 	}
 }
 
-void gser(float* gamser, float a, float x, float* gln) {
+void gser(double* gamser, double a, double x, double* gln) {
 	int n;
-	float sum,del,ap;
+	double sum,del,ap;
 
 	*gln=gammln(a);
 	if (x <= 0.0) {
@@ -85,9 +85,9 @@ void gser(float* gamser, float a, float x, float* gln) {
 	}
 }
 
-void gcf(float* gammcf, float a, float x, float* gln) {
+void gcf(double* gammcf, double a, double x, double* gln) {
 	int i;
-	float an,b,c,d,del,h;
+	double an,b,c,d,del,h;
 
 	*gln=gammln(a);
 	b=x+1.0-a;
