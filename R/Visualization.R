@@ -17,3 +17,20 @@ PoisUMI_plot_fit <- function(output, genes=NA) {
 		points(xes[genes], output$p_obs[genes], col="purple", pch=16)
 	}
 }
+
+PoisUMI_dropout_plot <- function(fit) {
+	plot(fit$s, fit$p_obs/length(diradj[1,]), log="x", xlab="Expression",ylab="Dropout Rate")
+	stddev = sqrt(fit$p_exp_var)
+	arrows(fit$s,(fit$p_exp-stddev*2)/length(diradj[1,]), fit$s, (fit$p_exp+stddev*2)/length(diradj[1,]), len=0, col="forestgreen")
+	points(fit$s, fit$p_exp/length(diradj[1,]), col="green", pch=16, cex=0.9)
+	legend("topright", paste("alpha =", round(fit$alpha, digits=2)), bty="n")
+}
+
+PoisUMI_plot_distance<-function(distance_matrix, labels) {
+	require("RColorBrewer")
+	require("gplots")
+	keep = rowSums(is.na(cell_cell_dist)) != length(cell_cell_dist[1,])-1
+	heat_data = cell_cell_dist[keep,keep]
+	Side_Colours=brewer.pal("Set1",n=length(unique(labels)))[labels[keep]]
+	heatmap.2(heat_data, trace="n", col=rainbow(30),key.title="", key.xlab="Distance", RowSideColors=Side_Colours, ColSideColors=Side_Colours, hclustfun = function(x){hclust(x,method="ward.D2")})
+}

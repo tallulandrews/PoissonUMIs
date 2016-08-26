@@ -79,6 +79,7 @@ PoisUMI_Poisson_Account_For_Depth <- function(expr_mat, dimension="genes", scale
 	}
 }
 
+# Do I want to include this?
 PoisUMI_Poisson_Account_For_Depth_DE <- function(expr_mat) {
 	vals = hidden_calc_s_and_p(expr_mat)
 	sj = vals$s # Mean expression each gene
@@ -201,4 +202,23 @@ PoisUMI_Full_Poisson_DE <- function(expr_mat, fit=NA) {
 PoisUMI_calc_lambdas <- function(expr_mat) {
 	fit = PoisUMI_Fit_Full_Poisson(expr_mat);
 	return(fit$lambdas);
+}
+
+PoisUMI_Important_Genes <- function(expr_mat, fit=NULL, method="weight") {
+	if (!(method %in% c("weight","outlier"))) {
+		stop(paste("Error: unknown method:", method, "\n"));
+	}
+	if (is.null(fit)) {
+		fit = PoisUMI_Fit_Full_Poisson(expr_mat)
+	}
+	if (method == "weight") {
+		weights = PoisUMI_Calc_Weights(expr_mat, fit$lambdas, fit$alpha)
+		score = rowSums(abs(weights));
+	}
+	if (method == "outlier") {
+		expect = PoisUMI_Full_Poisson_DE(expr_mat, fit=fit)
+		score = qnorm(expect$pvalue, lower.tail=FALSE)
+	}
+	names(score) = rownames(expr_mat);
+	return(rev(sort(score)));
 }

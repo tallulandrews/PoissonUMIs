@@ -13,6 +13,7 @@ void covariance_weighted (double* x, double* wx, double* y, double* wy, int* n, 
 	double sum_wx = 0.0;
 	double sum_y = 0.0;
 	double sum_wy = 0.0;
+	// Calc Means
 	int i;
 	for (i = 0; i < *n; i++) {
 		sum_x = sum_x + wx[i]*x[i];
@@ -20,6 +21,7 @@ void covariance_weighted (double* x, double* wx, double* y, double* wy, int* n, 
 		sum_y = sum_y + wy[i]*y[i];
 		sum_wy = sum_wy + wy[i];
 	}
+	// Calc Covariance
 	double sum_w = 0.0;
 	double sum_cov = 0.0;
 	for (i = 0; i < *n; i++) {
