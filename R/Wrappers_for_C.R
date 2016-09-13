@@ -32,6 +32,9 @@ PoisUMI_Calc_Weighted_Distances  <- function(norm_mat, weight_mat, exponent=2) {
 		weight_mat = as.matrix(weight_mat);
 	}
 
+	norm_mat <- t(norm_mat)
+	weight_mat <- t(weight_mat)
+
 	if (!identical(dim(norm_mat), dim(weight_mat))) {
 		stop("Error: Normalized expression matrix and weights are not of the same dimension");
 	}
