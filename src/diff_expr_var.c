@@ -1,3 +1,19 @@
+/* Copyright (c) 2016 Genome Research Ltd .
+Author : Tallulah Andrews <tallulandrews@gmail.com>
+This file is part of PoissonUMIs.
+
+PoissonUMIs is free software : you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program . If not , see <http://www.gnu.org/licenses/>. */
+
 #include <math.h>
 #include <stdio.h>
 #include "misc_functions.h"
@@ -65,7 +81,8 @@ void distance_wgt (double* y, double* w, int* nrow, int* ncol, double* exponent,
 				int coords1 = convert_2D_indices_to_1D(row1, column, nrow, ncol);
 				int coords2 = convert_2D_indices_to_1D(row2, column, nrow, ncol);
 				double difference = fabs(y[coords1]-y[coords2]);
-				double weight = w[coords1]*w[coords2];
+//				double weight = w[coords1]*w[coords2];
+				double weight = w[coords1]+w[coords2];
 				sum_w = sum_w + weight;
 				
 				if (*exponent == 2.0) {
