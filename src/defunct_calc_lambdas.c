@@ -25,7 +25,7 @@ double* calc_lambdas (int* expr_mat, int* nc, int* ng) {
 
 	long tis[*nc]; //total reads per cell
 	long sj[*ng]; //total reads per gene
-	long total; //total reads in matrix
+	long total = 0; //total reads in matrix
 	
 	int i,j;
 	for (i = 0; i < *nc; i++) {

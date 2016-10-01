@@ -16,6 +16,7 @@ this program . If not , see <http://www.gnu.org/licenses/>. */
 
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "misc_functions.h"
 
 double calc_gene_log_likelihood (double* val_mat, double* lambda_mat, int* ncol, int* nrow, int gene_row) {
@@ -98,7 +99,7 @@ void distance_wgt (double* y, double* w, int* nrow, int* ncol, double* exponent,
 			if (*exponent == 2.0) {
                                 dist = sqrt(dist);
                         } else if (*exponent == 1.0) {
-                                dist = dist;
+                                //dist = dist;
                         } else {
                                 dist = pow(dist, 1.0/(*exponent));
                         }
