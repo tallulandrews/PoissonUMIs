@@ -144,9 +144,9 @@ PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
 			sigma_obs =  sqrt(nc*djs[j]/nc*(1-djs[j]/nc))
 			sigma = max(sigma, sigma_obs)
 			if (sigma == 0 & res == 0){R = R+1; next;} 
-			if (sigma == 0 & res > 0){denom = denom-1; next;} 
-			if (is.na(dnorm(res, 0, sigma, log=TRUE))) {print(j);}
-			if (!is.finite(dnorm(res, 0, sigma, log=TRUE))) {print(j);}
+			if (sigma == 0 & abs(res) > 0){denom = denom-1; next;} 
+#			if (is.na(dnorm(res, 0, sigma, log=TRUE))) {print(j);}
+#			if (!is.finite(dnorm(res, 0, sigma, log=TRUE))) {print(j);}
 			R = R + dnorm(res, 0, sigma, log=TRUE);
 		}
 		R = R/denom
@@ -163,7 +163,7 @@ PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
 			sigma_obs = sqrt(ng*gis[i]/ng*(1-gis[i]/ng))
 			sigma = max(sigma, sigma_obs)
 			if (sigma == 0 & res == 0){R2=R2+1; next;} 
-			if (sigma == 0 & res > 0){denom2 = denom2-1; next;} 
+			if (sigma == 0 & abs(res) > 0){denom2 = denom2-1; next;} 
 			R2 = R2+dnorm(res,0, sigma, log=TRUE)
 		}
 		R2 = R2/denom2
@@ -173,12 +173,12 @@ PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
 	fit_basic = PoisUMI_Fit_Basic_Poisson(expr_mat)
 	# Add robustness against failure to fit
 	res = fit_basic$p_obs - fit_basic$p_exp;
-	if (sum(res < 0)/length(res) > 0.8 | sum(res > 0)/length(res) > 0.8) {
+	if (sum(res < 0)/length(res) > 0.75 | sum(res > 0)/length(res) > 0.75) {
 		print("First fitting failed attempting again")
 		fit_basic = PoisUMI_Fit_Basic_Poisson(expr_mat, sigma_init=0.01)
 	}
 	res = fit_basic$p_obs - fit_basic$p_exp;
-	if (sum(res < 0)/length(res) > 0.8 | sum(res > 0)/length(res) > 0.8) {
+	if (sum(res < 0)/length(res) > 0.75 | sum(res > 0)/length(res) > 0.75) {
 		print("Second fitting failed attempting again")
 		fit_basic = PoisUMI_Fit_Basic_Poisson(expr_mat, sigma_init=0.5)
 	}
@@ -188,10 +188,34 @@ PoisUMI_Fit_Full_Poisson <- function(expr_mat) {
 	scale_factor = fit@coef[1]
 	predictions = PoisUMI_Poisson_Account_For_Depth(expr_mat, dimension="genes", scale_factor=scale_factor)
 	
+	# Calculate lambda for each observation
 	lambdas = (sj %*% t(tis))*(nc*scale_factor/total);
 
-	return(list(s=sj, p_obs = djs, p_exp=predictions$vals, p_exp_var=predictions$var, alpha=scale_factor, alpha_basic=fit_basic$alpha, lambdas = lambdas));
+	# Calculate log-normal error of alpha
+	gene_specific_alpha <- function(gene_index) {
+		LLgs <- function(alpha) {
+			if (alpha <= 0) { return(nc*ng*1000000000)} #alpha should always be positive
+			p = exp(-tis*sj[gene_index]*nc*alpha/total)
+			if (sum(is.na(p) | p < 0 | p > 1) > 0) {
+				stop("p is unacceptable value (1)")
+			}
+			sigma = sqrt(sum(p*(1-p)));
+			sigma_obs =  sqrt(nc*djs[gene_index]/nc*(1-djs[gene_index]/nc))
+			sigma = max(sigma, sigma_obs)
+			res = djs[gene_index] - sum(p);
+			if (sigma == 0 & res == 0){return(0)} 
+			if (sigma == 0 & abs(res) > 0){return(10000000000)} 
+			-1*dnorm(res, 0, sigma, log=TRUE);
+		}
+		fit = mle2(LLgs, start = list(alpha=scale_factor))
+		return(fit@coef[1]);
+	}
+	alphas = sapply(1:length(sj), function(x){suppressWarnings(gene_specific_alpha(x))});
+	alpha_err = sqrt(var(log(alphas))/length(sj)) # Is this correct? - Methinks not
+
+	return(list(s=sj, p_obs = djs, p_exp=predictions$vals, p_exp_var=predictions$var, alpha=scale_factor, alpha_basic=fit_basic$alpha, alpha_err=alpha_err, lambdas = lambdas));
 }
+
 
 PoisUMI_Full_Poisson_DE <- function(expr_mat, fit=NA) {
 	# Need to incorporate error on S
