@@ -14,7 +14,7 @@
 #You should have received a copy of the GNU General Public License along with
 #this program . If not , see <http://www.gnu.org/licenses/>.
 
-PoisUMI_Calc_Weights <- function(expr_mat, lambdas, alpha) {
+PoisUMI_Calc_Weights <- function(expr_mat, lambdas, alpha, alpha_err) {
 	# Check Input
 	if (!is.matrix(expr_mat)) {
 		expr_mat = as.matrix(expr_mat);
@@ -30,7 +30,7 @@ PoisUMI_Calc_Weights <- function(expr_mat, lambdas, alpha) {
 	Ncol = dim(expr_mat)[2];
 	initialized_output <- matrix(rep(0, times=Nrow*Ncol), nrow=Nrow, ncol=Ncol);
 	# Run command
-	out <- .C( "calc_weights", val_mat=as.double(expr_mat*alpha), lambda_mat=as.double(lambdas), weight_mat=as.double(initialized_output), ncol=as.integer(Ncol), nrow=as.integer(Nrow) );
+	out <- .C( "calc_weights", val_mat=as.double(expr_mat*alpha), lambda_mat=as.double(lambdas), sigma_ref=as.double(alpha_err), weight_mat=as.double(initialized_output), ncol=as.integer(Ncol), nrow=as.integer(Nrow) );
 
 	# Clean up output
 	final_output = matrix(out$weight_mat, nrow=Nrow, ncol=Ncol);
@@ -131,7 +131,7 @@ PoisUMI_Calc_Weighted_PCA  <- function(norm_mat, weight_mat, Nf=2, e=0.001, max_
 }
 
 
-PoisUMI_Differential_Expression <- function(expr_mat, lambdas, alpha, labels) {
+PoisUMI_Differential_Expression <- function(expr_mat, lambdas, alpha, alpha_err, labels) {
 	# Check Input
 	if (!is.matrix(expr_mat)) {
 		expr_mat = as.matrix(expr_mat);
@@ -153,11 +153,13 @@ PoisUMI_Differential_Expression <- function(expr_mat, lambdas, alpha, labels) {
 
 	initialized_output <- matrix(rep(0, times=Nrow*(nlabels+1)), nrow=Nrow, ncol=(nlabels+1));
 	# Run command
-	out <- .C( "diff_expression", y=as.double(expr_mat*alpha), w=as.double(lambdas), nrow=as.integer(Nrow), ncol=as.integer(Ncol), labels=as.integer(numeric_labels), nlabels = as.integer(nlabels), out = as.double(initialized_output) );
+	out <- .C( "diff_expression", y=as.double(expr_mat*alpha), w=as.double(lambdas), nrow=as.integer(Nrow), ncol=as.integer(Ncol), labels=as.integer(numeric_labels), nlabels = as.integer(nlabels), sigma_ref = as.double(alpha_err), out = as.double(initialized_output) );
 
-	# Clean up output
+	# Clean up output & multiple testing correction
 	final_output = matrix(out$out, nrow=Nrow, ncol=(nlabels+1));
-	colnames(final_output) = c(levels(factor(labels)),"pvalue");
-	rownames(final_output) = rownames(norm_mat);
+	qval <- p.adjust(final_output[,length(final_output[1,])], method="fdr")
+	final_output <- cbind(final_output, qval);
+	colnames(final_output) = c(levels(factor(labels)),"p.value", "q.value");
+	rownames(final_output) = rownames(expr_mat);
 	return(final_output);
 }
