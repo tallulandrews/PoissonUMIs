@@ -1,3 +1,7 @@
 PoissonUMIs - Poisson Modelling of scRNASeq UMI counts
 
 This is an R package providing functions for fitting, analyzing and visualizing single-cell RNASeq data which has been quantified by counting UMIs while accounting for different sequencing depths/detection rates between cells.
+
+
+THIS PACKAGE IS DEFUNCT - PLEASE USE MY M3Drop package instead, the same functionality is available using the functions prefixed with NBumi
+See: http://hemberg-lab.github.io/scRNA.seq.course/biological-analysis.html#feature-selection for a tutorial on using that package.
