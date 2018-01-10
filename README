@@ -5,5 +5,6 @@ quantified by counting UMIs while accounting for different sequencing depths/det
 
 
 THIS PACKAGE IS DEFUNCT - PLEASE USE MY M3Drop package instead, the same functionality is available using the 
-functions prefixed with NBumi
-See: http://hemberg-lab.github.io/scRNA.seq.course/biological-analysis.html#feature-selection for a tutorial on using that package.
+functions prefixed with NBumi for a tutorial see:
+See: http://hemberg-lab.github.io/scRNA.seq.course/biological-analysis.html#feature-selection 
+
